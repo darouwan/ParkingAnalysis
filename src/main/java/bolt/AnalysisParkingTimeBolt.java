@@ -14,19 +14,26 @@ import java.util.Map;
  * Created by Junfeng on 2015/3/24.
  */
 public class AnalysisParkingTimeBolt extends BaseBasicBolt {
-    HashMap<Integer,Integer> result;
+    HashMap<String,Integer> result;
 
     @Override
     public void prepare(Map stormConf, TopologyContext context) {
         super.prepare(stormConf, context);
-        result = new HashMap<Integer, Integer>();
+        result = new HashMap<String, Integer>();
     }
 
 
     @Override
     public void execute(Tuple input, BasicOutputCollector collector) {
         System.out.println(input.getString(1));
-
+        String parkCode = input.getString(1);
+        Integer count = result.get(parkCode);
+        if (count==null){
+            result.put(parkCode,1);
+        }else {
+            count = count+1;
+            result.put(parkCode,count);
+        }
     }
 
     @Override
