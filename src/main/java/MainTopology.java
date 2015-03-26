@@ -14,10 +14,10 @@ public class MainTopology {
         TopologyBuilder builder = new TopologyBuilder();
         builder.setSpout("spout",new RawMessageSpout());
         builder.setBolt("bolt1",new NormalizeBolt(),2).shuffleGrouping("spout");
-        builder.setBolt("bolt2",new AnalysisParkingTimeBolt(),2).fieldsGrouping("bolt1",new Fields("parkCode"));
+        builder.setBolt("bolt2",new AnalysisParkingTimeBolt(),2).fieldsGrouping("bolt1",new Fields("parkSpaceCode"));
         Config conf = new Config();
         conf.setDebug(true);
-
+        conf.put(Config.TOPOLOGY_DEBUG, true);
 
         LocalCluster cluster = new LocalCluster();
         cluster.submitTopology("analysis", conf, builder.createTopology());
