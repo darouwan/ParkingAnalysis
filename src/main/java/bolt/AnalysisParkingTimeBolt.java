@@ -77,7 +77,7 @@ public class AnalysisParkingTimeBolt extends BaseBasicBolt {
         //Calculate the average parking time every hour
         int interval =(int) (System.currentTimeMillis()-lastClearTimeInMilliseconds)/1000/60;
         if(interval>1){
-            //if 60 minutes have been past
+             //if 60 minutes have been past
             int sum=0;
             for (int duration: durationList){
                 sum+=duration;

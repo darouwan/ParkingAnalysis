@@ -12,5 +12,7 @@ public class HelloWorldTest {
         String result = helloWorld.sayHello();
 
         assertEquals( "Hello Maven", result );
+
+        //assertEquals("1","0");
     }
 }
