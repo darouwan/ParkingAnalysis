@@ -16,7 +16,7 @@ public class MainTopology {
         builder.setSpout("spout",new RawMessageSpout());
         builder.setBolt("bolt1",new NormalizeBolt(),2).shuffleGrouping("spout");
         builder.setBolt("bolt2",new AnalysisParkingTimeBolt(),2).fieldsGrouping("bolt1",new Fields("parkSpaceCode"));
-        builder.setBolt("timeBolt", new TimeBolt()).shuffleGrouping("bolt1");
+        //builder.setBolt("timeBolt", new TimeBolt()).shuffleGrouping("bolt1");
 
         Config conf = new Config();
         conf.setDebug(true);
