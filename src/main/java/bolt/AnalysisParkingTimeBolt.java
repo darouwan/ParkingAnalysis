@@ -94,7 +94,7 @@ public class AnalysisParkingTimeBolt implements IRichBolt {
 
     private int calculateAverageParkingTime(List<Integer> durationList, long lastClearTimeInMilliseconds){
         //Calculate the average parking time every hour
-        int interval = (int) (System.currentTimeMillis() - lastClearTimeInMilliseconds) / 1000 / 60;
+        //int interval = (int) (System.currentTimeMillis() - lastClearTimeInMilliseconds) / 1000 / 60;
         int avg=0;
 
             //if 60 minutes have been past
