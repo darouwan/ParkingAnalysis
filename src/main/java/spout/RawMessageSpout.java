@@ -34,26 +34,15 @@ public class RawMessageSpout extends BaseRichSpout {
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
         _collector=spoutOutputCollector;
         inQueue = new ConcurrentLinkedQueue<String>();
-        try {
-            serverSocket= new ServerSocket(20000);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        TCPReceiver tcpReceiver = new TCPReceiver(inQueue);
+        tcpReceiver.start();
 
     }
 
     @Override
     public void nextTuple() {
-        Socket socket = null;
-        try {
-            socket = serverSocket.accept();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        TCPReceiver tcpReceiver = new TCPReceiver(socket,inQueue);
         //disable thread to send the string immediately
-        tcpReceiver.run();
+
         if (!inQueue.isEmpty()){
             String readyString = inQueue.poll();
             _collector.emit(new Values(readyString));

@@ -7,7 +7,6 @@ import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
 import bolt.AnalysisParkingTimeBolt;
 import bolt.NormalizeBolt;
-import bolt.TimeBolt;
 import spout.RawMessageSpout;
 
 /**
@@ -30,8 +29,10 @@ public class MainTopology {
             cluster.submitTopology("analysis", conf, builder.createTopology());
         }else {
             conf.setNumWorkers(3);
-
+            conf.setDebug(true);
+            conf.put(Config.TOPOLOGY_DEBUG, true);
             StormSubmitter.submitTopologyWithProgressBar(args[0], conf, builder.createTopology());
+            //StormSubmitter.sub
         }
 
     }

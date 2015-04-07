@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
-  <artifact type="jar" name="muzhipark:jar">
-    <output-path>$PROJECT_DIR$/classes/artifacts/muzhipark_jar</output-path>
+  <artifact type="jar" build-on-make="true" name="muzhipark:jar">
+    <output-path>$PROJECT_DIR$/</output-path>
     <root id="archive" name="muzhipark.jar">
       <element id="module-output" name="muzhipark" />
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/clj-stacktrace/clj-stacktrace/0.2.2/clj-stacktrace-0.2.2.jar" path-in-jar="/" />
