@@ -32,36 +32,39 @@ public class MainTopology {
         }
 
 
-        BrokerHosts hosts = new ZkHosts(zkConnString);
-        SpoutConfig spoutConfig = new SpoutConfig(hosts, topicName, zkPath, UUID.randomUUID().toString());
-        spoutConfig.scheme = new SchemeAsMultiScheme(new StringScheme());
-        KafkaSpout kafkaSpout = new KafkaSpout(spoutConfig);
 
 
 
         TopologyBuilder builder = new TopologyBuilder();
 
+        if(isLocal){
+            builder.setSpout("RawMessageSpout",new RawMessageSpout());
+            builder.setBolt("NormalizeBolt",new NormalizeBolt(),2).shuffleGrouping("RawMessageSpout");
+            builder.setBolt("AnalysisParkingTimeBolt",new AnalysisParkingTimeBolt(),2).fieldsGrouping("NormalizeBolt",new Fields("parkSpaceCode"));
+            //builder.setBolt("timeBolt", new TimeBolt()).shuffleGrouping("bolt1");
 
-        //builder.setSpout("RawMessageSpout",new RawMessageSpout());
-        builder.setSpout("RawMessageSpout",kafkaSpout);
-        builder.setBolt("NormalizeBolt",new NormalizeBolt(),2).shuffleGrouping("RawMessageSpout");
-        builder.setBolt("AnalysisParkingTimeBolt",new AnalysisParkingTimeBolt(),2).fieldsGrouping("NormalizeBolt",new Fields("parkSpaceCode"));
-        //builder.setBolt("timeBolt", new TimeBolt()).shuffleGrouping("bolt1");
-
-        Config conf = new Config();
-
-        if(args.length==0) {
+            Config conf = new Config();
             conf.setDebug(true);
             conf.put(Config.TOPOLOGY_DEBUG, true);
             LocalCluster cluster = new LocalCluster();
             cluster.submitTopology("analysis", conf, builder.createTopology());
-        }else {
+        }
+        else {
+            BrokerHosts hosts = new ZkHosts(zkConnString);
+            SpoutConfig spoutConfig = new SpoutConfig(hosts, topicName, zkPath, UUID.randomUUID().toString());
+            spoutConfig.scheme = new SchemeAsMultiScheme(new StringScheme());
+            KafkaSpout kafkaSpout = new KafkaSpout(spoutConfig);
+
+            builder.setSpout("RawMessageSpout",kafkaSpout);
+            builder.setBolt("NormalizeBolt",new NormalizeBolt(),2).shuffleGrouping("RawMessageSpout");
+            builder.setBolt("AnalysisParkingTimeBolt",new AnalysisParkingTimeBolt(),2).fieldsGrouping("NormalizeBolt", new Fields("parkSpaceCode"));
+            Config conf = new Config();
             conf.setNumWorkers(3);
             conf.setDebug(true);
             conf.put(Config.TOPOLOGY_DEBUG, true);
-            StormSubmitter.submitTopologyWithProgressBar(args[0], conf, builder.createTopology());
-            //StormSubmitter.sub
+            StormSubmitter.submitTopologyWithProgressBar("analysis", conf, builder.createTopology());
         }
+
 
     }
 }

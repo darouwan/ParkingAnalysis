@@ -78,10 +78,10 @@ public class AnalysisParkingTimeBolt implements IRichBolt {
                 try {
                     long timeOutMilliseconds = dateFormat.parse(time).getTime();
                     if (timeInMilliseconds != null && timeOutMilliseconds > timeInMilliseconds) {
-                        //Calculate parking duration in minutes
+                        //Calculate the specific parking duration in minutes
                         int parkingDurationTimeInMinutes = (int) (timeOutMilliseconds - timeInMilliseconds) / 1000 / 60;
                         logger.info(parkingDurationTimeInMinutes + " minutes for " + parkSpaceCode);
-                        durationList.add(parkingDurationTimeInMinutes);
+                        durationList.add(parkingDurationTimeInMinutes);//Save parking time to the list
                     }
                 } catch (ParseException e) {
                     e.printStackTrace();
@@ -92,6 +92,12 @@ public class AnalysisParkingTimeBolt implements IRichBolt {
         }
     }
 
+    /**
+     * Calculate the average parking duration time in the past  {lastClearTimeInMilliseconds} long time
+     * @param durationList
+     * @param lastClearTimeInMilliseconds
+     * @return minutes
+     */
     private int calculateAverageParkingTime(List<Integer> durationList, long lastClearTimeInMilliseconds){
         //Calculate the average parking time every hour
         //int interval = (int) (System.currentTimeMillis() - lastClearTimeInMilliseconds) / 1000 / 60;
