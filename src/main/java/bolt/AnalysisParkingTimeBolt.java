@@ -4,13 +4,12 @@ import backtype.storm.Config;
 import backtype.storm.Constants;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
-import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.IRichBolt;
 import backtype.storm.topology.OutputFieldsDeclarer;
-import backtype.storm.topology.base.BaseBasicBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import org.apache.log4j.Logger;
+import scala.Int;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -22,14 +21,16 @@ import java.util.*;
  * 用来计算单位时间内驶出的每辆车的平均停车时间长度
  */
 public class AnalysisParkingTimeBolt implements IRichBolt {
-    HashMap<String, Long> inRecordMap;
+    HashMap<String, Long> parkingSpaceRecordMap;
+    HashMap<String,Integer> parkDurationMap;
     DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static Logger logger = Logger.getLogger(AnalysisParkingTimeBolt.class);
-    List<Integer> durationList;
+    List<Integer> wholeDurationList;
     //上一次计算时间
     long lastClearTimeInMilliseconds = 0L;
     //计算间隔分钟数
     final static int interval = 60;
+
 
 
     @Override
@@ -46,19 +47,22 @@ public class AnalysisParkingTimeBolt implements IRichBolt {
 
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
-        inRecordMap = new HashMap<String, Long>();
-        durationList = new ArrayList<Integer>();
+        parkingSpaceRecordMap = new HashMap<String, Long>();
+        wholeDurationList = new ArrayList<Integer>();
         lastClearTimeInMilliseconds = System.currentTimeMillis();
+        parkDurationMap = new HashMap<String, Integer>();
     }
 
     @Override
     public void execute(Tuple input) {
         if (isTickTuple(input)) {
             //Recount average time
-            calculateAverageParkingTime(durationList,lastClearTimeInMilliseconds);
+            calculateAverageParkingTime(wholeDurationList,lastClearTimeInMilliseconds);
             lastClearTimeInMilliseconds = System.currentTimeMillis();
+            calculateAverageParkingTimeByPark(parkDurationMap);
         } else {
             logger.debug(input.getString(2));
+            String parkCode = input.getString(1);
             String parkSpaceCode = input.getString(2);
             String status = input.getString(3);
             String time = input.getString(4);
@@ -67,21 +71,29 @@ public class AnalysisParkingTimeBolt implements IRichBolt {
                 logger.debug(parkSpaceCode + " is in");
                 try {
                     long timeInMilliseconds = dateFormat.parse(time).getTime();
-                    inRecordMap.put(parkSpaceCode, timeInMilliseconds);
+                    parkingSpaceRecordMap.put(parkSpaceCode, timeInMilliseconds);
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
             } else if (status.equals("0")) {
                 //If car is parking out
                 logger.debug(parkSpaceCode + " is out");
-                Long timeInMilliseconds = inRecordMap.get(parkSpaceCode);
+                Long timeInMilliseconds = parkingSpaceRecordMap.get(parkSpaceCode);
                 try {
                     long timeOutMilliseconds = dateFormat.parse(time).getTime();
                     if (timeInMilliseconds != null && timeOutMilliseconds > timeInMilliseconds) {
                         //Calculate the specific parking duration in minutes
                         int parkingDurationTimeInMinutes = (int) (timeOutMilliseconds - timeInMilliseconds) / 1000 / 60;
                         logger.info(parkingDurationTimeInMinutes + " minutes for " + parkSpaceCode);
-                        durationList.add(parkingDurationTimeInMinutes);//Save parking time to the list
+                        wholeDurationList.add(parkingDurationTimeInMinutes);//Save parking time to the list
+
+
+                        Integer currentTime = parkDurationMap.get(parkCode);
+                        if(currentTime==null){
+                            parkDurationMap.put(parkCode,  parkingDurationTimeInMinutes);
+                        }else {
+                            parkDurationMap.put(parkCode,currentTime+ parkingDurationTimeInMinutes);
+                        }
                     }
                 } catch (ParseException e) {
                     e.printStackTrace();
@@ -93,7 +105,22 @@ public class AnalysisParkingTimeBolt implements IRichBolt {
     }
 
     /**
-     * Calculate the average parking duration time in the past  {lastClearTimeInMilliseconds} long time
+     *
+     * @param parkDurationMap
+     * @return
+     */
+    private int calculateAverageParkingTimeByPark(HashMap<String, Integer> parkDurationMap) {
+        int size = parkDurationMap.size();
+        Collection<Integer> list =parkDurationMap.values();
+        int sum=0;
+        for(Integer i:list){
+            sum+=i;
+        }
+        return sum/size;
+    }
+
+    /**
+     * Calculate the average parking duration time in the past lastClearTimeInMilliseconds  long time
      * @param durationList
      * @param lastClearTimeInMilliseconds
      * @return minutes

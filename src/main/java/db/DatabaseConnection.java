@@ -33,4 +33,9 @@ public  class DatabaseConnection {
     public static Connection getConn(){
         return conn;
     }
+
+
+    public static void main(String[] args){
+        DatabaseConnection databaseConnection = new DatabaseConnection();
+    }
 }
