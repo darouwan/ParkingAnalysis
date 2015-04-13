@@ -6,7 +6,8 @@ import backtype.storm.generated.InvalidTopologyException;
 import backtype.storm.spout.SchemeAsMultiScheme;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
-import bolt.AnalysisParkingTimeBolt;
+import bolt.AnalysisBolt;
+import bolt.CalculateParkingTimeBolt;
 import bolt.NormalizeBolt;
 import spout.RawMessageSpout;
 import storm.kafka.*;
@@ -32,15 +33,13 @@ public class MainTopology {
         }
 
 
-
-
-
         TopologyBuilder builder = new TopologyBuilder();
 
         if(isLocal){
             builder.setSpout("RawMessageSpout",new RawMessageSpout());
             builder.setBolt("NormalizeBolt",new NormalizeBolt(),2).shuffleGrouping("RawMessageSpout");
-            builder.setBolt("AnalysisParkingTimeBolt",new AnalysisParkingTimeBolt(),2).fieldsGrouping("NormalizeBolt",new Fields("parkSpaceCode"));
+            builder.setBolt("CalculateParkingTimeBolt", new CalculateParkingTimeBolt(), 2).fieldsGrouping("NormalizeBolt", new Fields("parkSpaceCode"));
+            builder.setBolt("Analysis", new AnalysisBolt(), 2).fieldsGrouping("CalculateParkingTimeBolt", new Fields("parkCode"));
             //builder.setBolt("timeBolt", new TimeBolt()).shuffleGrouping("bolt1");
 
             Config conf = new Config();
@@ -57,7 +56,8 @@ public class MainTopology {
 
             builder.setSpout("RawMessageSpout",kafkaSpout);
             builder.setBolt("NormalizeBolt",new NormalizeBolt(),2).shuffleGrouping("RawMessageSpout");
-            builder.setBolt("AnalysisParkingTimeBolt",new AnalysisParkingTimeBolt(),2).fieldsGrouping("NormalizeBolt", new Fields("parkSpaceCode"));
+            builder.setBolt("CalculateParkingTimeBolt", new CalculateParkingTimeBolt(), 2).fieldsGrouping("NormalizeBolt", new Fields("parkSpaceCode"));
+            builder.setBolt("Analysis", new AnalysisBolt(), 2).fieldsGrouping("CalculateParkingTimeBolt", new Fields("parkCode"));
             Config conf = new Config();
             conf.setNumWorkers(3);
             conf.setDebug(true);
