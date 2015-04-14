@@ -26,7 +26,7 @@ public class MainTopology {
         String zkPath="D:\\Downloads\\kafka_2.11-0.8.2.1\\kafka_2.11-0.8.2.1";
         if(args!=null&&args.length>0){
             isLocal=false;
-            zkPath="/opt/zookeeper-3.4.6";
+
 
         }else {
             isLocal=true;
@@ -49,6 +49,7 @@ public class MainTopology {
             cluster.submitTopology("analysis", conf, builder.createTopology());
         }
         else {
+            zkPath = "/opt/zookeeper-3.4.6";
             BrokerHosts hosts = new ZkHosts(zkConnString);
             SpoutConfig spoutConfig = new SpoutConfig(hosts, topicName, zkPath, UUID.randomUUID().toString());
             spoutConfig.scheme = new SchemeAsMultiScheme(new StringScheme());
@@ -58,11 +59,12 @@ public class MainTopology {
             builder.setBolt("NormalizeBolt",new NormalizeBolt(),2).shuffleGrouping("RawMessageSpout");
             builder.setBolt("CalculateParkingTimeBolt", new CalculateParkingTimeBolt(), 2).fieldsGrouping("NormalizeBolt", new Fields("parkSpaceCode"));
             builder.setBolt("Analysis", new AnalysisBolt(), 2).fieldsGrouping("CalculateParkingTimeBolt", new Fields("parkCode"));
+
             Config conf = new Config();
             conf.setNumWorkers(3);
             conf.setDebug(true);
             conf.put(Config.TOPOLOGY_DEBUG, true);
-            StormSubmitter.submitTopologyWithProgressBar("analysis", conf, builder.createTopology());
+            StormSubmitter.submitTopologyWithProgressBar("analysis-cluster", conf, builder.createTopology());
         }
 
 

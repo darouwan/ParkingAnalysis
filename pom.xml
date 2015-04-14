@@ -9,6 +9,7 @@
     <version>1.0-SNAPSHOT</version>
     <name>Parking Analysis</name>
 
+
     <dependencies>
         <dependency>
             <groupId>org.apache.storm</groupId>
@@ -74,7 +75,7 @@
                 <configuration>
                     <source>1.6</source>
                     <target>1.6</target>
-                    <encoding>UTF-8</encoding>
+                    <encoding>ISO-8859-1</encoding>
                 </configuration>
             </plugin>
 

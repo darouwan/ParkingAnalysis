@@ -17,8 +17,20 @@ import java.util.Map;
  * Created by Junfeng on 2015/4/13.
  */
 public class AnalysisBolt implements IRichBolt {
-    private static Logger logger = Logger.getLogger(AnalysisBolt.class);
     private final static int interval = 60;
+    private static Logger logger = Logger.getLogger(AnalysisBolt.class);
+
+    /**
+     * 根据传送过来的Tuple，判断本Tuple是否是tickTuple 如果是tickTuple，则触发动作
+     *
+     * @param tuple
+     * @return
+     */
+    public static boolean isTickTuple(Tuple tuple) {
+        return tuple.getSourceComponent().equals(Constants.SYSTEM_COMPONENT_ID) // SYSTEM_COMPONENT_ID
+                && tuple.getSourceStreamId().equals(Constants.SYSTEM_TICK_STREAM_ID); // SYSTEM_TICK_STREAM_ID
+        // == "__tick"
+    }
 
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -45,12 +57,10 @@ public class AnalysisBolt implements IRichBolt {
 
     @Override
     public void cleanup() {
-
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-
     }
 
     @Override
@@ -58,19 +68,6 @@ public class AnalysisBolt implements IRichBolt {
         Map<String, Object> conf = new HashMap<String, Object>();
         conf.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, interval);// 设置本Bolt定时发射数据(所以这个地方我们可以偷偷地进行某些定时处理)
         return conf;
-    }
-
-
-    /**
-     * 根据传送过来的Tuple，判断本Tuple是否是tickTuple 如果是tickTuple，则触发动作
-     *
-     * @param tuple
-     * @return
-     */
-    public static boolean isTickTuple(Tuple tuple) {
-        return tuple.getSourceComponent().equals(Constants.SYSTEM_COMPONENT_ID) // SYSTEM_COMPONENT_ID
-                && tuple.getSourceStreamId().equals(Constants.SYSTEM_TICK_STREAM_ID); // SYSTEM_TICK_STREAM_ID
-        // == "__tick"
     }
 
     /**
