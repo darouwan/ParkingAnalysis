@@ -1,9 +1,9 @@
 package bolt;
 
-import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
-import backtype.storm.topology.IRichBolt;
+import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
+import backtype.storm.topology.base.BaseBasicBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
@@ -21,16 +21,16 @@ import java.util.Map;
  * Created by Junfeng on 2015/3/24.
  * 用来计算每辆车停车时间长度
  */
-public class CalculateParkingTimeBolt implements IRichBolt {
+public class CalculateParkingTimeBolt extends BaseBasicBolt {
     private HashMap<String, Long> parkingSpaceRecordMap;
     private HashMap<String, List> parkDurationMap;
     private DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static Logger logger = Logger.getLogger(CalculateParkingTimeBolt.class);
-    private OutputCollector outputCollector;
+    //private OutputCollector outputCollector;
     //上一次计算时间
-    private long lastClearTimeInMilliseconds = 0L;
+    //private long lastClearTimeInMilliseconds = 0L;
     //计算间隔分钟数
-    private final static int interval = 60;
+    //private final static int interval = 60;
 
 
     @Override
@@ -38,23 +38,22 @@ public class CalculateParkingTimeBolt implements IRichBolt {
         declarer.declare(new Fields("parkCode", "parkingSpaceCode", "minutes", "currentTime"));
     }
 
-    @Override
-    public Map<String, Object> getComponentConfiguration() {
-        return null;
-    }
+
 
     @Override
-    public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
+    public void prepare(Map stormConf, TopologyContext context) {
         parkingSpaceRecordMap = new HashMap<String, Long>();
         //wholeDurationList = new ArrayList<Integer>();
-        lastClearTimeInMilliseconds = System.currentTimeMillis();
+        //lastClearTimeInMilliseconds = System.currentTimeMillis();
         parkDurationMap = new HashMap<String, List>();
-        this.outputCollector = collector;
+        //this.outputCollector = collector;
     }
 
-    @Override
-    public void execute(Tuple input) {
 
+
+
+    @Override
+    public void execute(Tuple input, BasicOutputCollector collector) {
         logger.debug(input.getString(2));
         String parkCode = input.getString(1);
         String parkSpaceCode = input.getString(2);
@@ -90,20 +89,14 @@ public class CalculateParkingTimeBolt implements IRichBolt {
 
 
                     //Emit original data
-                    outputCollector.emit(new Values(parkCode, parkSpaceCode, parkingDurationTimeInMinutes, dateFormat.format(new Date())));
+                    collector.emit(new Values(parkCode, parkSpaceCode, parkingDurationTimeInMinutes, dateFormat.format(new Date())));
                 }
             } catch (ParseException e) {
                 e.printStackTrace();
             }
 
         }
-
-
     }
 
 
-    @Override
-    public void cleanup() {
-
-    }
 }

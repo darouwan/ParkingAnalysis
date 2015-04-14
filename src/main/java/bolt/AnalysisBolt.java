@@ -9,6 +9,7 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Tuple;
 import org.apache.log4j.Logger;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,8 @@ import java.util.Map;
 public class AnalysisBolt implements IRichBolt {
     private final static int interval = 60;
     private static Logger logger = Logger.getLogger(AnalysisBolt.class);
+    private HashMap<String, List> parkDurationMap;
+    private OutputCollector collector;
 
     /**
      * 根据传送过来的Tuple，判断本Tuple是否是tickTuple 如果是tickTuple，则触发动作
@@ -34,24 +37,32 @@ public class AnalysisBolt implements IRichBolt {
 
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
-
+        this.parkDurationMap = new HashMap<String, List>();
+        this.collector = collector;
     }
 
     @Override
     public void execute(Tuple input) {
         if (isTickTuple(input)) {
+            logger.info("Tick is coming");
             //Recount average time
-//            int overallAvgParkingTime=calculateAverageParkingTime(parkDurationMap);
-//            lastClearTimeInMilliseconds = System.currentTimeMillis();
-//            calculateAverageParkingTimeByPark(parkDurationMap,"");
+            int overallAvgParkingTime = calculateAverageParkingTime(parkDurationMap);
+            long lastClearTimeInMilliseconds = System.currentTimeMillis();
+            calculateAverageParkingTimeByPark(parkDurationMap, "");
 //
-//            parkDurationMap.clear();
+            parkDurationMap.clear();
         } else {
             String parkCode = input.getString(0);
             String parkingSpaceCode = input.getString(1);
             int timeInMinutes = input.getInteger(2);
             String recordTime = input.getString(3);
             logger.info("ParkCode:" + parkCode + " ParkingSpaceCode:" + parkingSpaceCode + " time:" + timeInMinutes + " record:" + recordTime);
+            List<Integer> timeList = parkDurationMap.get(parkCode);
+            if (timeList == null) {
+                timeList = new ArrayList<Integer>();
+            }
+            timeList.add(timeInMinutes);
+            parkDurationMap.put(parkCode, timeList);
         }
     }
 
@@ -66,7 +77,7 @@ public class AnalysisBolt implements IRichBolt {
     @Override
     public Map<String, Object> getComponentConfiguration() {
         Map<String, Object> conf = new HashMap<String, Object>();
-        conf.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, interval);// 设置本Bolt定时发射数据(所以这个地方我们可以偷偷地进行某些定时处理)
+        conf.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, interval);// 设置本Bolt定时发射数据
         return conf;
     }
 
@@ -84,10 +95,13 @@ public class AnalysisBolt implements IRichBolt {
             for (int i = 0; i < list.size(); i++) {
                 sum = sum + list.get(i);
             }
-            avg = sum / list.size();
+            if (list.size() != 0) {
+                avg = sum / list.size();
+            }
+
         }
 
-        logger.debug("The avg time of " + parkCode + " is " + avg + " minutes");
+        logger.info("The avg time of " + parkCode + " is " + avg + " minutes");
         return avg;
     }
 
@@ -104,15 +118,22 @@ public class AnalysisBolt implements IRichBolt {
         List<Integer> list;
         int sum = 0;
         int count = 0;
-        for (Map.Entry<String, List> entry : parkDurationMap.entrySet()) {
-            list = entry.getValue();
-            for (Integer i : list) {
-                sum += i;
+
+        if (parkDurationMap != null) {
+            for (Map.Entry<String, List> entry : parkDurationMap.entrySet()) {
+                list = entry.getValue();
+                for (Integer i : list) {
+                    sum += i;
+                }
+                count += list.size();
             }
-            count += list.size();
+            if (count != 0) {
+                avg = sum / count;
+            }
         }
-        avg = sum / count;
-        logger.debug("The avg time of all parks is " + avg + " minutes");
+
+
+        logger.info("The avg time of all parks is " + avg + " minutes");
         return avg;
     }
 }
