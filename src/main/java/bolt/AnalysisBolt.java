@@ -64,6 +64,7 @@ public class AnalysisBolt implements IRichBolt {
             timeList.add(timeInMinutes);
             parkDurationMap.put(parkCode, timeList);
         }
+        collector.ack(input);
     }
 
     @Override

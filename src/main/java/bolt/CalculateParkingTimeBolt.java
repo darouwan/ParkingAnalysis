@@ -73,12 +73,13 @@ public class CalculateParkingTimeBolt extends BaseBasicBolt {
             logger.debug(parkSpaceCode + " is out");
             Long timeInMilliseconds = parkingSpaceRecordMap.get(parkSpaceCode);
             try {
-                long timeOutMilliseconds = dateFormat.parse(time).getTime();
-                if (timeInMilliseconds != null && timeOutMilliseconds > timeInMilliseconds) {
-                    //Calculate the specific parking duration in minutes
-                    int parkingDurationTimeInMinutes = (int) (timeOutMilliseconds - timeInMilliseconds) / 1000 / 60;
-                    logger.info(parkingDurationTimeInMinutes + " minutes for " + parkSpaceCode);
-                    //wholeDurationList.add(parkingDurationTimeInMinutes);//Save parking time to the list
+                if (timeInMilliseconds != null) {
+                    long timeOutMilliseconds = dateFormat.parse(time).getTime();
+                    if (timeInMilliseconds != null && timeOutMilliseconds > timeInMilliseconds) {
+                        //Calculate the specific parking duration in minutes
+                        int parkingDurationTimeInMinutes = (int) (timeOutMilliseconds - timeInMilliseconds) / 1000 / 60;
+                        logger.info(parkingDurationTimeInMinutes + " minutes for " + parkSpaceCode);
+                        //wholeDurationList.add(parkingDurationTimeInMinutes);//Save parking time to the list
 //                        List parkingDurationTimeList = parkDurationMap.get(parkCode);
 //                        if(parkingDurationTimeList==null){
 //                            parkingDurationTimeList = new ArrayList<Integer>();
@@ -88,9 +89,11 @@ public class CalculateParkingTimeBolt extends BaseBasicBolt {
 //                        parkDurationMap.put(parkCode,parkingDurationTimeList);
 
 
-                    //Emit original data
-                    collector.emit(new Values(parkCode, parkSpaceCode, parkingDurationTimeInMinutes, dateFormat.format(new Date())));
+                        //Emit original data
+                        collector.emit(new Values(parkCode, parkSpaceCode, parkingDurationTimeInMinutes, dateFormat.format(new Date())));
+                    }
                 }
+
             } catch (ParseException e) {
                 e.printStackTrace();
             }
